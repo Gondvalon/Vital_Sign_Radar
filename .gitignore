@@ -185,3 +185,5 @@ CATKIN_IGNORE
 
 # End of https://www.toptal.com/developers/gitignore/api/cmake,clion,ros
 
+
+gazebo_ros_vital_radar/.idea/

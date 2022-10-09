@@ -11,8 +11,6 @@
 
 #include <vital_sign_msgs/VitalSigns.h>
 
-#include <dynamic_reconfigure/server.h
-
 namespace gazebo {
     class GZ_PLUGIN_VISIBLE VitalRadar : public SensorPlugin {
     public:
@@ -53,8 +51,6 @@ namespace gazebo {
         double defaultDamping;
         double wallDamping;
         double minDetectablePower;
-
-        boost::shared_ptr<dynamic_reconfigure::Server<SensorModelConfig> > dynamic_reconfigure_server_;
     };
 }
 #endif

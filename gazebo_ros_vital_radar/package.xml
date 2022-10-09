@@ -27,5 +27,4 @@
   
   <!-- Dependencies needed to compile this package and afterwards. -->
   <depend>roscpp</depend>
-  <depend>dynamic_reconfigure</depend>
 </package>

@@ -7,8 +7,6 @@
 
 #include "vital_radar.hh"
 
-#include <gazebo/gazebo_config.h
-
 using namespace gazebo;
 
 GZ_REGISTER_SENSOR_PLUGIN(VitalRadar)
@@ -19,8 +17,6 @@ VitalRadar::~VitalRadar() {
     this->newLaserScansConnection.reset();
 
     this->sensor->SetActive(false);
-
-    dynamic_reconfigure_server.reset();
 
     node_handle_->shutdown();
     delete node_handle_;
@@ -86,9 +82,6 @@ void VitalRadar::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf) {
 
     node_handle_ = new ros::NodeHandle(namespace_);
     publisher_ = node_handle_->advertise<vital_sign_msgs::VitalSigns>(topic_, 100);
-
-    dynamic_reconfigure_server_.reset(new dynamic_reconfigure::Server<SensorModelConfig>(ros::NodeHandle(*node_handle_, topic_)));
-    dynamic_reconfigure_server_->setCallback(boost::bind(&SensorModel::dynamicReconfigureCallback, &sensor_model_, _1, _2));
 
     Reset();
 
