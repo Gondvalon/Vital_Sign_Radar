@@ -4,11 +4,14 @@
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/sensors/SensorTypes.hh>
 #include <gazebo/sensors/RaySensor.hh>
-#include <gazebo/physics/MultiRayShape.hh>
-#include <gazebo/physics/RayShape.hh>
 #include <gazebo/util/system.hh>
-#include <ignition/math/Vector3.hh>
-#include <list>
+
+#include <ros/callback_queue.h
+#include <ros/ros.h>
+
+#include <vital_sign_msgs/VitalSigns.h>
+
+#include <dynamic_reconfigure/server.h
 
 namespace gazebo {
     class GZ_PLUGIN_VISIBLE VitalRadar : public SensorPlugin {
@@ -17,32 +20,29 @@ namespace gazebo {
 
         virtual ~VitalRadar();
 
+    protected:
+
         virtual void OnNewLaserScans();
 
         void Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf);
 
-        
+
     private:
         sensors::RaySensorPtr sensor;
         physics::WorldPtr world;
+
+        ros::NodeHandle* node_handle_;
+        ros::Publisher publisher_;
+        
+        vital_sign_msgs::VitalSigns multipleVitalSignsMsg;
 
         std::string namespace_;
         std::string topic_;
         std::string frame_id_;
 
+        SensorModel sensor_model_;
+
         event::ConnectionPtr newLaserScansConnection;
-
-        std::vector<double> ranges;
-
-        physics::RayShapePtr rayShape;
-
-        //calculating new Rays
-        ignition::math::Vector3d rayStart;
-        ignition::math::Vector3d rayEnd;
-        ignition::math::Vector3d rayGradient;
-
-        double heartRate;
-        double respiratoryRate;
 
         //parameters changable in sdf sensor plugin
         int penetrableObjects;
@@ -53,6 +53,8 @@ namespace gazebo {
         double defaultDamping;
         double wallDamping;
         double minDetectablePower;
+
+        boost::shared_ptr<dynamic_reconfigure::Server<SensorModelConfig> > dynamic_reconfigure_server_;
     };
 }
 #endif

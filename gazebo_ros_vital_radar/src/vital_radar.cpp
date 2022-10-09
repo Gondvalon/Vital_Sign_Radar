@@ -4,11 +4,10 @@
 #include <gazebo/physics/physics.hh>
 #include <ignition/math/Vector3.hh>
 #include <cmath>
-#include <list>
 
-#include <functional>
-#include "gazebo/physics/physics.hh"
 #include "vital_radar.hh"
+
+#include <gazebo/gazebo_config.h
 
 using namespace gazebo;
 
@@ -19,8 +18,12 @@ VitalRadar::VitalRadar() {}
 VitalRadar::~VitalRadar() {
     this->newLaserScansConnection.reset();
 
-    this->sensor.reset();
-    this->world.reset();
+    this->sensor->SetActive(false);
+
+    dynamic_reconfigure_server.reset();
+
+    node_handle_->shutdown();
+    delete node_handle_;
 }
 
 void VitalRadar::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf) {
@@ -34,7 +37,7 @@ void VitalRadar::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf) {
     //default Parameters
     this->namespace_.clear();
     this->topic_ = "vitalRadar";
-    this->frame_id_ = "/vital_radar";
+    this->frame_id_ = "/vital_radar_link";
     this->penetrableObjects = 1000;
     this->radarPower = 100000.0;
     this->gain = 1.0;
@@ -71,9 +74,28 @@ void VitalRadar::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf) {
         this->minDetectablePower = std::stod(_sdf->GetElement("minDetectablePower")->GetValue()->GetAsString());
     }
 
+    sensor_model_.Load(_sdf);
+
+    this->multipleVitalSignsMsg.header.frame_id = frame_id_;
+
+    if (!ros::isInitialized()) {
+        ROS_FATAL_STREAM("A ROS node for Gazebo has not been initialized, unable to load plugin. "
+        << "Load the Gazebo system plugin 'libgazebo_ros_api_plugin.so' in the gazebo_ros package");
+        return;
+    }
+
+    node_handle_ = new ros::NodeHandle(namespace_);
+    publisher_ = node_handle_->advertise<vital_sign_msgs::VitalSigns>(topic_, 100);
+
+    dynamic_reconfigure_server_.reset(new dynamic_reconfigure::Server<SensorModelConfig>(ros::NodeHandle(*node_handle_, topic_)));
+    dynamic_reconfigure_server_->setCallback(boost::bind(&SensorModel::dynamicReconfigureCallback, &sensor_model_, _1, _2));
+
+    Reset();
+
     this->newLaserScansConnection =
             this->sensor->LaserShape()->ConnectNewLaserScans(std::bind(&VitalRadar::OnNewLaserScans, this));
 
+    this->sensor->SetActive(true);
 };
 
 void VitalRadar::OnNewLaserScans() {
@@ -82,9 +104,11 @@ void VitalRadar::OnNewLaserScans() {
     coll->SetWorldPoseDirty();
 
     std::string nameOfHitModel;
+
+    std::vector<double> ranges;
     this->sensor->Ranges(ranges);
 
-    if (this->ranges.size() <= 0) {
+    if (ranges.size() <= 0) {
         return;
     }
 
@@ -103,13 +127,18 @@ void VitalRadar::OnNewLaserScans() {
         ignition::math::Vector3d position;
     };
     std::vector<human> humanObjects;
+
     physics::ModelPtr modelHitByRay;
-    for(int i = 0; i < this->ranges.size(); i++) {
+    physics::RayShapePtr rayShape;
+    ignition::math::Vector3d rayStart;
+    ignition::math::Vector3d rayEnd;
+    ignition::math::Vector3d rayGradient;
+    for(int i = 0; i < ranges.size(); i++) {
         //update RayShape collision box position
         physics::CollisionPtr rayColl = boost::dynamic_pointer_cast<physics::Collision>(this->sensor->LaserShape()->Ray(i)->GetParent());
         rayColl->SetWorldPoseDirty();
 
-        if (this->ranges.at(i) > this->sensor->RangeMax()) {
+        if (ranges.at(i) > this->sensor->RangeMax()) {
             continue;
         }
 
@@ -121,14 +150,14 @@ void VitalRadar::OnNewLaserScans() {
         currentPath.clear();
         while (rayTravelDist <= this->sensor->RangeMax()) {
             this->wallDamping = this->defaultDamping;
-            this->rayShape = this->sensor->LaserShape()->Ray(i);
+            rayShape = this->sensor->LaserShape()->Ray(i);
 
             double sectionTilHit = 0.0;
-            this->rayShape->GetIntersection(sectionTilHit, nameOfHitModel);
+            rayShape->GetIntersection(sectionTilHit, nameOfHitModel);
 
-            this->rayShape->RelativePoints(this->rayStart, this->rayEnd);
-            this->rayGradient = this->rayEnd - this->rayStart;
-            this->rayGradient = this->rayGradient.Normalize();
+            rayShape->RelativePoints(rayStart, rayEnd);
+            rayGradient = rayEnd - rayStart;
+            rayGradient = rayGradient.Normalize();
 
             //if no object hit then sectionTilHit will be 1000
             if (sectionTilHit > this->sensor->RangeMax()) {
@@ -191,15 +220,15 @@ void VitalRadar::OnNewLaserScans() {
                     humanObjects[humanObjects.size()-1].distance = rayLength;
                     humanObjects[humanObjects.size()-1].receivedPower = raySignalStrength;
                     humanObjects[humanObjects.size()-1].rayReflectingArea = raySurfaceCoverage;
-                    humanObjects[humanObjects.size()-1].position = this->rayEnd;
+                    humanObjects[humanObjects.size()-1].position = rayEnd;
                 }
             }
             rayTravelDist = rayTravelDist + sectionTilHit + 0.0001;
             oldNameOfHitModel = nameOfHitModel;
-            this->rayShape->SetPoints(this->rayGradient * rayTravelDist, this->rayGradient * this->sensor->RangeMax());
+            rayShape->SetPoints(rayGradient * rayTravelDist, rayGradient * this->sensor->RangeMax());
         }
         //resets ray
-        this->rayShape->SetPoints(this->rayGradient * this->sensor->RangeMin(), this->rayGradient * this->sensor->RangeMax());
+        rayShape->SetPoints(rayGradient * this->sensor->RangeMin(), rayGradient * this->sensor->RangeMax());
     }
 
     //handling of found human objects
@@ -223,18 +252,14 @@ void VitalRadar::OnNewLaserScans() {
         humanObjects[i].receivedPower = humanObjects[i].receivedPower * reflectingArea;
     }
 
-    //calculate the vital signs with noise
+    //calculate the vital signs with noise and send the ros message
     double deviationPercentage;
+    vital_sign_msgs::VitalSignMeasurement vitalSignMsg;
     for (int i = 0; i<humanObjects.size(); i++) {
-        printf("Name: %s  Distance: %f  Size:%ld  Power:%f\n", humanObjects[i].name.c_str(), humanObjects[i].distance, humanObjects.size(), humanObjects[i].receivedPower);
-
         deviationPercentage = 0.2 + pow(((humanObjects[i].receivedPower - this->minDetectablePower) /
                 (this->radarPower - this->minDetectablePower)), 1.0/4.0) * - 0.2;
-        printf("Calc: %f \n", ((humanObjects[i].receivedPower - this->minDetectablePower) /
-                (this->radarPower - this->minDetectablePower)));
         double heartDeviation = humanObjects[i].heartRate * deviationPercentage;
         double respiratoryDeviation = humanObjects[i].respiratoryRate * deviationPercentage;
-        printf("DevPer: %f  HDev: %f  RDev: %f\n", deviationPercentage, heartDeviation, respiratoryDeviation);
         std::normal_distribution<> distHeart(humanObjects[i].heartRate, heartDeviation);
         std::normal_distribution<> distRespiratory(humanObjects[i].respiratoryRate, respiratoryDeviation);
 
@@ -242,8 +267,18 @@ void VitalRadar::OnNewLaserScans() {
         std::mt19937 generator{seed()};
         double noisyHeartRate = distHeart(generator);
         double noisyRespiratoryRate = distRespiratory(generator);
-        printf("HNoise: %f, RNoise: %f, Name: %s\n",noisyHeartRate, noisyRespiratoryRate, humanObjects[i].name.c_str());
+
+        vitalSignMsg.location.x = humanObjects[i].position.X();
+        vitalSignMsg.location.y = humanObjects[i].position.Y();
+        vitalSignMsg.location.z = humanObjects[i].position.Z();
+        vitalSignMsg.heart_rate = noisyHeartRate;
+        vitalSignMsg.breathing_rate = noisyRespiratoryRate;
+        vitalSignMsg.heart_rate_variance = heartDeviation;
+        vitalSignMsg.breathing_rate_variance = respiratoryDeviation;
+
+        this->multipleVitalSignsMsg.measurements.push_back(vitalSignMsg);
     }
+    publisher_.publish(this->multipleVitalSignsMsg)
 
     printf("\n");
 }
