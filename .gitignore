@@ -187,3 +187,5 @@ CATKIN_IGNORE
 
 
 gazebo_ros_vital_radar/.idea/
+
+msg_subscriber/.idea/
