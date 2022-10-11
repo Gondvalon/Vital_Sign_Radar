@@ -96,11 +96,33 @@
         <gravity>1</gravity>
       </link>
     </model>
+    <model name="wall_1">
+      <static>true</static>
+      <link name="small_wall_142_link">
+        <pose>-13.5 0 0.75 0 0 1.5708</pose>
+        <collision name="wall_1_collision">
+          <geometry>
+            <box>
+              <size>3 0.2 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="small_wall_142_visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>3 0.2 2</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+      <vitalRadar:damping>600</vitalRadar:damping>
+    </model>
     <model name='human_1'>
       <include>
         <uri> model://human</uri>
       </include>
-      <pose>-14 0 0.5 0 0 0</pose>
+      <pose>-14 0 0.5 0 0 3.14159</pose>
       <vitalRadar:damping>15.0</vitalRadar:damping>
       <human:heartRate>80</human:heartRate>
       <human:respiratoryRate>20</human:respiratoryRate>
@@ -134,5 +156,3 @@
     </gui>
   </world>
 </sdf>
-
-
