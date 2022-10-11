@@ -2,11 +2,10 @@
 #define GAZEBO_PLUGINS_VITALRADAR_HH_
 
 #include <gazebo/common/Plugin.hh>
-#include <gazebo/sensors/SensorTypes.hh>
 #include <gazebo/sensors/RaySensor.hh>
 #include <gazebo/util/system.hh>
 
-#include <ros/callback_queue.h
+#include <ros/callback_queue.h>
 #include <ros/ros.h>
 
 #include <vital_sign_msgs/VitalSigns.h>
@@ -38,19 +37,18 @@ namespace gazebo {
         std::string topic_;
         std::string frame_id_;
 
-        SensorModel sensor_model_;
-
         event::ConnectionPtr newLaserScansConnection;
 
-        //parameters changable in sdf sensor plugin
+        //parameters changeable in sdf sensor plugin
         int penetrableObjects;
         double radarPower;
         double receivableSignalArea;
         double gain;
+        double minDetectablePower;
+        double detectionPowerThreshold;
         //damping should be >=1
         double defaultDamping;
         double wallDamping;
-        double minDetectablePower;
     };
 }
 #endif
