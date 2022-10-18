@@ -98,8 +98,8 @@
     </model>
     <model name="wall_1">
       <static>true</static>
-      <link name="small_wall_142_link">
-        <pose>-13.5 0 0.75 0 0 1.5708</pose>
+      <link name="wall_1_link">
+        <pose>-12.5 0 0.75 0 0 1.5708</pose>
         <collision name="wall_1_collision">
           <geometry>
             <box>
@@ -107,7 +107,7 @@
             </box>
           </geometry>
         </collision>
-        <visual name="small_wall_142_visual">
+        <visual name="wall_1_visual">
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
@@ -122,7 +122,7 @@
       <include>
         <uri> model://human</uri>
       </include>
-      <pose>-14 0 0.5 0 0 3.14159</pose>
+      <pose>-13 0 0.5 0 0 3.14159</pose>
       <vitalRadar:damping>15.0</vitalRadar:damping>
       <human:heartRate>80</human:heartRate>
       <human:respiratoryRate>20</human:respiratoryRate>
