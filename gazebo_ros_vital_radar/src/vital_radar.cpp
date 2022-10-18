@@ -37,7 +37,7 @@ namespace gazebo {
         this->receivableSignalArea = 0.01;
         this->defaultDamping = 1.0;
         this->minDetectablePower = 0.0;
-        this->detectionPowerThreshold =  this->minDetectablePower;
+        this->maxQualityThreshold =  this->radarPower;
 
         if (_sdf->HasElement("robotNamespace")) {
             this->namespace_ = _sdf->GetElement("robotNamespace")->GetValue()->GetAsString();
@@ -67,8 +67,12 @@ namespace gazebo {
         if (_sdf->HasElement("minDetectablePower")) {
             this->minDetectablePower = std::stod(_sdf->GetElement("minDetectablePower")->GetValue()->GetAsString());
         }
-        if (_sdf->HasElement("detectionPowerThreshold")) {
-            this->detectionPowerThreshold = std::stod(_sdf->GetElement("detectionPowerThreshold")->GetValue()->GetAsString());
+        if (_sdf->HasElement("maxQualityThreshold")) {
+            this->maxQualityThreshold = std::stod(_sdf->GetElement("maxQualityThreshold")->GetValue()->GetAsString());
+        }
+
+        if(this->maxQualityThreshold > this->radarPower) {
+            this->maxQualityThreshold = this->radarPower;
         }
 
         this->multipleVitalSignsMsg.header.frame_id = frame_id_;
@@ -81,7 +85,6 @@ namespace gazebo {
 
         node_handle_ = new ros::NodeHandle(namespace_);
         publisher_ = node_handle_->advertise<vital_sign_msgs::VitalSigns>(topic_, 100);
-
 
         this->newLaserScansConnection =
                 this->sensor->LaserShape()->ConnectNewLaserScans(std::bind(&VitalRadar::OnNewLaserScans, this));
@@ -139,7 +142,7 @@ namespace gazebo {
             double rayTravelDist = this->sensor->RangeMin();
             int penetratedWalls = 0;
             std::string oldNameOfHitModel = "";
-            double raySignalStrength = 0.0;
+            double raySignalPower = 0.0;
             currentPath.clear();
             while (rayTravelDist <= this->sensor->RangeMax()) {
                 this->wallDamping = this->defaultDamping;
@@ -191,8 +194,10 @@ namespace gazebo {
                     double verticalAngle =
                             (this->sensor->VerticalAngleMax().Radian() - this->sensor->AngleMin().Radian()) /
                             (this->sensor->VerticalRayCount() - 1);
-                    double raySurfaceCoverage = sin(horizontalAngle) * (rayTravelDist + sectionTilHit) *
-                                                sin(verticalAngle) * (rayTravelDist + sectionTilHit);
+                    double raySurfaceCoverage = sqrt(pow((rayTravelDist + sectionTilHit), 2.0) * 2
+                            - (2 * pow((rayTravelDist + sectionTilHit), 2.0) * cos(horizontalAngle))) *
+                            sqrt(pow((rayTravelDist + sectionTilHit), 2.0) * 2
+                            - (2 * pow((rayTravelDist + sectionTilHit), 2.0) * cos(verticalAngle)));
 
                     //calculate received power without area
                     double medianDampingCoeff = 0.0;
@@ -202,24 +207,25 @@ namespace gazebo {
                         sectionPercentage = currentPath[i].thickness / (rayLength);
                         medianDampingCoeff = medianDampingCoeff + sectionPercentage * currentPath[i].dampingCoeff;
                     }
-                    raySignalStrength = this->radarPower * this->gain * this->receivableSignalArea /
-                                        (medianDampingCoeff * pow(rayLength, 4.0) * pow((4 * M_PI), 2.0));
-
+                    raySignalPower = (this->radarPower * this->gain * this->receivableSignalArea) /
+                                        (pow(medianDampingCoeff, 2.0) * pow(rayLength, 4.0) * pow((4 * M_PI), 2.0));
                     double heartRate = std::stod(
                             modelHitByRay->GetSDF()->GetElement("human:heartRate")->GetValue()->GetAsString());
                     double respiratoryRate = std::stod(
                             modelHitByRay->GetSDF()->GetElement("human:respiratoryRate")->GetValue()->GetAsString());
 
-                    if (raySignalStrength > this->minDetectablePower) {
-                        humanObjects.push_back(human());
-                        humanObjects[humanObjects.size() - 1].name = nameOfHitModel;
-                        humanObjects[humanObjects.size() - 1].heartRate = heartRate;
-                        humanObjects[humanObjects.size() - 1].respiratoryRate = respiratoryRate;
-                        humanObjects[humanObjects.size() - 1].distance = rayLength;
-                        humanObjects[humanObjects.size() - 1].receivedPower = raySignalStrength;
-                        humanObjects[humanObjects.size() - 1].rayReflectingArea = raySurfaceCoverage;
-                        humanObjects[humanObjects.size() - 1].position = rayEnd;
-                    }
+                    //position of hit Object
+                    ignition::math::Vector3d hitPoint;
+                    hitPoint = rayGradient * (rayTravelDist + sectionTilHit);
+
+                    humanObjects.push_back(human());
+                    humanObjects[humanObjects.size() - 1].name = nameOfHitModel;
+                    humanObjects[humanObjects.size() - 1].heartRate = heartRate;
+                    humanObjects[humanObjects.size() - 1].respiratoryRate = respiratoryRate;
+                    humanObjects[humanObjects.size() - 1].distance = rayLength;
+                    humanObjects[humanObjects.size() - 1].receivedPower = raySignalPower;
+                    humanObjects[humanObjects.size() - 1].rayReflectingArea = raySurfaceCoverage;
+                    humanObjects[humanObjects.size() - 1].position = hitPoint;
                 }
                 rayTravelDist = rayTravelDist + sectionTilHit + 0.0001;
                 oldNameOfHitModel = nameOfHitModel;
@@ -248,17 +254,22 @@ namespace gazebo {
                 }
             }
             humanObjects[i].receivedPower = humanObjects[i].receivedPower * reflectingArea;
+            if (humanObjects[i].receivedPower < this->minDetectablePower) {
+                humanObjects.erase(humanObjects.begin() + i);
+                i = i - 1;
+            }
         }
 
         //calculate the vital signs with noise and send the ros message
         double deviationPercentage;
         vital_sign_msgs::VitalSignMeasurement vitalSignMsg;
+        this->multipleVitalSignsMsg.measurements.clear();
         for (int i = 0; i < humanObjects.size(); i++) {
-            if ( humanObjects[i].receivedPower > this->detectionPowerThreshold) {
-                deviationPercentage = 1.0;
+            if ( humanObjects[i].receivedPower > this->maxQualityThreshold) {
+                deviationPercentage = 0.01;
             } else {
-                deviationPercentage = 0.2 + pow(((humanObjects[i].receivedPower - this->minDetectablePower) /
-                                                 (this->detectionPowerThreshold - this->minDetectablePower)), 1.0 / 4.0) * -0.2;
+                deviationPercentage = 0.2 - ((humanObjects[i].receivedPower - this->minDetectablePower) /
+                                                 (this->maxQualityThreshold - this->minDetectablePower)) * 0.2;
             }
             double heartDeviation = humanObjects[i].heartRate * deviationPercentage;
             double respiratoryDeviation = humanObjects[i].respiratoryRate * deviationPercentage;

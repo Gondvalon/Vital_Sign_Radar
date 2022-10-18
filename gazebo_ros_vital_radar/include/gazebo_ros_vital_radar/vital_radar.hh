@@ -45,7 +45,7 @@ namespace gazebo {
         double receivableSignalArea;
         double gain;
         double minDetectablePower;
-        double detectionPowerThreshold;
+        double maxQualityThreshold;
         //damping should be >=1
         double defaultDamping;
         double wallDamping;
