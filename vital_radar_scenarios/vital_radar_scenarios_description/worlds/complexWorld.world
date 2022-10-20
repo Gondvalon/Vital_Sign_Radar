@@ -176,7 +176,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>2300</vitalRadar:damping>
+      <vitalRadar:damping>50</vitalRadar:damping>
     </model>
     <model name="wall_2">
       <static>true</static>
@@ -198,7 +198,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>2300</vitalRadar:damping>
+      <vitalRadar:damping>50</vitalRadar:damping>
     </model>
     <model name="wall_3">
       <static>true</static>
@@ -220,7 +220,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>2300</vitalRadar:damping>
+      <vitalRadar:damping>50</vitalRadar:damping>
     </model>
     <model name="wall_4">
       <static>true</static>
@@ -242,7 +242,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>2300</vitalRadar:damping>
+      <vitalRadar:damping>50</vitalRadar:damping>
     </model>
     <model name="wall_5">
       <static>true</static>
@@ -264,7 +264,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>2300</vitalRadar:damping>
+      <vitalRadar:damping>50</vitalRadar:damping>
     </model>
     <model name="wall_6">
       <static>true</static>
@@ -286,7 +286,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>2300</vitalRadar:damping>
+      <vitalRadar:damping>50</vitalRadar:damping>
     </model>
     <model name="wall_7">
       <static>true</static>
@@ -308,7 +308,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>2300</vitalRadar:damping>
+      <vitalRadar:damping>50</vitalRadar:damping>
     </model>
     <model name="box_1">
       <static>true</static>
@@ -330,7 +330,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>600</vitalRadar:damping>
+      <vitalRadar:damping>20</vitalRadar:damping>
     </model>
     <model name="box_2">
       <static>true</static>
@@ -352,7 +352,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>600</vitalRadar:damping>
+      <vitalRadar:damping>20</vitalRadar:damping>
     </model>
     <model name="box_3">
       <static>true</static>
@@ -374,7 +374,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>600</vitalRadar:damping>
+      <vitalRadar:damping>20</vitalRadar:damping>
     </model>
     <model name="box_4">
       <static>true</static>
@@ -396,7 +396,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>600</vitalRadar:damping>
+      <vitalRadar:damping>20</vitalRadar:damping>
     </model>
     
     <spherical_coordinates>
