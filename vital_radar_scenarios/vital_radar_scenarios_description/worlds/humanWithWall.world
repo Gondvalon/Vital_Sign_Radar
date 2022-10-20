@@ -116,7 +116,7 @@
           </geometry>
         </visual>
       </link>
-      <vitalRadar:damping>600</vitalRadar:damping>
+      <vitalRadar:damping>50</vitalRadar:damping>
     </model>
     <model name='human_1'>
       <include>

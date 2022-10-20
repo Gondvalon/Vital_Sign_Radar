@@ -47,6 +47,7 @@ namespace gazebo {
         double minDetectablePower;
         double maxQualityThreshold;
         //damping should be >=1
+        double noisePower;
         double defaultDamping;
         double wallDamping;
     };

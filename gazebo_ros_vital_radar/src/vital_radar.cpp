@@ -35,6 +35,7 @@ namespace gazebo {
         this->radarPower = 100000.0;
         this->gain = 1.0;
         this->receivableSignalArea = 0.01;
+        this->noisePower = 0.1;
         this->defaultDamping = 1.0;
         this->minDetectablePower = 0.0;
         this->maxQualityThreshold =  this->radarPower;
@@ -61,6 +62,9 @@ namespace gazebo {
         if (_sdf->HasElement("receivableSignalArea")) {
             this->receivableSignalArea = std::stod(_sdf->GetElement("receivableSignalArea")->GetValue()->GetAsString());
         }
+        if (_sdf->HasElement("noisePower")) {
+            this->noisePower = std::stod(_sdf->GetElement("noisePower")->GetValue()->GetAsString());
+        }
         if (_sdf->HasElement("defaultDamping")) {
             this->defaultDamping = std::stod(_sdf->GetElement("defaultDamping")->GetValue()->GetAsString());
         }
@@ -71,8 +75,11 @@ namespace gazebo {
             this->maxQualityThreshold = std::stod(_sdf->GetElement("maxQualityThreshold")->GetValue()->GetAsString());
         }
 
-        if(this->maxQualityThreshold > this->radarPower) {
+        if (this->maxQualityThreshold > this->radarPower) {
             this->maxQualityThreshold = this->radarPower;
+        }
+        if (this->noisePower <= 0.0) {
+            this->noisePower = 0.00000000001;
         }
 
         this->multipleVitalSignsMsg.header.frame_id = frame_id_;
@@ -119,6 +126,8 @@ namespace gazebo {
             double respiratoryRate;
             double receivedPower;
             double rayReflectingArea;
+            double area;
+            double medianDampingCoeff;
             ignition::math::Vector3d position;
         };
         std::vector<human> humanObjects;
@@ -225,6 +234,7 @@ namespace gazebo {
                     humanObjects[humanObjects.size() - 1].distance = rayLength;
                     humanObjects[humanObjects.size() - 1].receivedPower = raySignalPower;
                     humanObjects[humanObjects.size() - 1].rayReflectingArea = raySurfaceCoverage;
+                    humanObjects[humanObjects.size() - 1].medianDampingCoeff = medianDampingCoeff;
                     humanObjects[humanObjects.size() - 1].position = hitPoint;
                 }
                 rayTravelDist = rayTravelDist + sectionTilHit + 0.0001;
@@ -253,6 +263,7 @@ namespace gazebo {
                     humanObjects.erase(humanObjects.begin() + i);
                 }
             }
+            humanObjects[i].area = reflectingArea;
             humanObjects[i].receivedPower = humanObjects[i].receivedPower * reflectingArea;
             if (humanObjects[i].receivedPower < this->minDetectablePower) {
                 humanObjects.erase(humanObjects.begin() + i);
@@ -268,8 +279,19 @@ namespace gazebo {
             if ( humanObjects[i].receivedPower > this->maxQualityThreshold) {
                 deviationPercentage = 0.01;
             } else {
-                deviationPercentage = 0.2 - ((humanObjects[i].receivedPower - this->minDetectablePower) /
-                                                 (this->maxQualityThreshold - this->minDetectablePower)) * 0.2;
+                double powerAfterOneM = (this->radarPower * this->gain * this->receivableSignalArea) /
+                        (pow(humanObjects[i].medianDampingCoeff, 2.0) * 1 * pow((4 * M_PI), 2.0)) *
+                        humanObjects[i].area;
+                //SN stands for Signal To Noise
+                double SNAfterOneM = 10 * log(powerAfterOneM/this->noisePower)/50;
+                double signalToNoise = (10 * log((humanObjects[i].receivedPower)/this->noisePower))/50;
+                if (signalToNoise < 0.0) {
+                    signalToNoise = 0.0;
+                }
+                deviationPercentage = 0.2 - ((signalToNoise/SNAfterOneM) * 0.2);
+                if (deviationPercentage < 0.01) {
+                    deviationPercentage = 0.01;
+                }
             }
             double heartDeviation = humanObjects[i].heartRate * deviationPercentage;
             double respiratoryDeviation = humanObjects[i].respiratoryRate * deviationPercentage;
