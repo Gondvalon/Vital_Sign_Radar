@@ -8,10 +8,10 @@
 void chatterCallback(const vital_sign_msgs::VitalSigns::ConstPtr& msg)
 {
     std::fstream vitalSignData;
-    vitalSignData.open("/home/philipp/Uni/10_SoSe/BachelorSimulation/Data/noisePower/noise_1.txt",
+    vitalSignData.open("/home/philipp/Uni/10_SoSe/BachelorSimulation/Data/Messages/complexWorld_drive.txt",
                        std::fstream::app | std::fstream::in | std::fstream::out);
     //code for one human in world
-    if (msg->measurements.size() == 0) {
+    /*if (msg->measurements.size() == 0) {
         vitalSignData << "0 0 0 0 0" << std::endl;
     } else {
         double distance = sqrt(pow(msg->measurements[0].location.x, 2.0) +
@@ -31,9 +31,9 @@ void chatterCallback(const vital_sign_msgs::VitalSigns::ConstPtr& msg)
             printf("File does not exist \n");
         }
     }
-
+    */
     //code for complex World
-    /*if(!vitalSignData) {
+    if(!vitalSignData) {
         printf("File does not exist \n");
     }
     int numHumans = 5;
@@ -45,7 +45,7 @@ void chatterCallback(const vital_sign_msgs::VitalSigns::ConstPtr& msg)
             vitalSignData << "" << distance << " " << msg->measurements[i].heart_rate << " " <<
                           msg->measurements[i].heart_rate_variance << " " <<
                           msg->measurements[i].breathing_rate << " " <<
-                          msg->measurements[i].breathing_rate_variance;
+                          msg->measurements[i].breathing_rate_variance << " ";
         } else if (msg->measurements.size() == 0) {
             vitalSignData << "" << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
                     << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
@@ -59,7 +59,7 @@ void chatterCallback(const vital_sign_msgs::VitalSigns::ConstPtr& msg)
     }
     vitalSignData << std::endl;
     vitalSignData.close();
-    */
+
 }
 int main(int argc, char **argv)
 {

@@ -35,7 +35,7 @@ namespace gazebo {
         this->radarPower = 100000.0;
         this->gain = 1.0;
         this->receivableSignalArea = 0.01;
-        this->noisePower = 0.1;
+        this->noisePower = 0.0001;
         this->defaultDamping = 1.0;
         this->minDetectablePower = 0.0;
         this->maxQualityThreshold =  this->radarPower;
@@ -283,8 +283,8 @@ namespace gazebo {
                         (pow(humanObjects[i].medianDampingCoeff, 2.0) * 1 * pow((4 * M_PI), 2.0)) *
                         humanObjects[i].area;
                 //SN stands for Signal To Noise
-                double SNAfterOneM = 10 * log(powerAfterOneM/this->noisePower)/50;
-                double signalToNoise = (10 * log((humanObjects[i].receivedPower)/this->noisePower))/50;
+                double SNAfterOneM = 10 * log(powerAfterOneM/this->noisePower);
+                double signalToNoise = (10 * log((humanObjects[i].receivedPower)/this->noisePower));
                 if (signalToNoise < 0.0) {
                     signalToNoise = 0.0;
                 }

@@ -102,9 +102,9 @@
         <uri> model://human</uri>
       </include>
       <pose>-11 0 0.5 0 0 3.1415</pose>
-      <vitalRadar:damping>100.0</vitalRadar:damping>
+      <vitalRadar:damping>10.0</vitalRadar:damping>
       <human:heartRate>80</human:heartRate>
-      <human:respiratoryRate>20</human:respiratoryRate>
+      <human:respiratoryRate>15</human:respiratoryRate>
     </model>
     <model name='human_2'>
       <static>true</static>
@@ -112,9 +112,9 @@
         <uri> model://human</uri>
       </include>
       <pose>-5.5 0 3.25 0 0 0</pose>
-      <vitalRadar:damping>100.0</vitalRadar:damping>
-      <human:heartRate>120</human:heartRate>
-      <human:respiratoryRate>30</human:respiratoryRate>
+      <vitalRadar:damping>10.0</vitalRadar:damping>
+      <human:heartRate>80</human:heartRate>
+      <human:respiratoryRate>15</human:respiratoryRate>
     </model>
     <model name='human_3'>
       <static>true</static>
@@ -122,9 +122,9 @@
         <uri> model://human</uri>
       </include>
       <pose>-5.5 -2.6 1.5 0 0 3.1415</pose>
-      <vitalRadar:damping>100.0</vitalRadar:damping>
-      <human:heartRate>80</human:heartRate>
-      <human:respiratoryRate>20</human:respiratoryRate>
+      <vitalRadar:damping>10.0</vitalRadar:damping>
+      <human:heartRate>120</human:heartRate>
+      <human:respiratoryRate>22</human:respiratoryRate>
     </model>
     <model name='human_3'>
       <static>true</static>
@@ -132,9 +132,9 @@
         <uri> model://human</uri>
       </include>
       <pose>-5.5 -2.6 1 0 0 0</pose>
-      <vitalRadar:damping>100.0</vitalRadar:damping>
-      <human:heartRate>120</human:heartRate>
-      <human:respiratoryRate>30</human:respiratoryRate>
+      <vitalRadar:damping>10.0</vitalRadar:damping>
+      <human:heartRate>60</human:heartRate>
+      <human:respiratoryRate>12</human:respiratoryRate>
     </model>
     <model name='human_4'>
       <static>true</static>
@@ -142,9 +142,9 @@
         <uri> model://human</uri>
       </include>
       <pose>-8 0 2.35 0 0 3.1415</pose>
-      <vitalRadar:damping>100.0</vitalRadar:damping>
-      <human:heartRate>80</human:heartRate>
-      <human:respiratoryRate>20</human:respiratoryRate>
+      <vitalRadar:damping>10.0</vitalRadar:damping>
+      <human:heartRate>90</human:heartRate>
+      <human:respiratoryRate>18</human:respiratoryRate>
     </model>
     <model name='human_5'>
       <static>true</static>
@@ -152,9 +152,9 @@
         <uri> model://human</uri>
       </include>
       <pose>-7 4 0.5 0 0 3.1415</pose>
-      <vitalRadar:damping>100.0</vitalRadar:damping>
-      <human:heartRate>80</human:heartRate>
-      <human:respiratoryRate>20</human:respiratoryRate>
+      <vitalRadar:damping>10.0</vitalRadar:damping>
+      <human:heartRate>90</human:heartRate>
+      <human:respiratoryRate>18</human:respiratoryRate>
     </model>
     <model name="wall_1">
       <static>true</static>
