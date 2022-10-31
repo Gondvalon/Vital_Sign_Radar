@@ -17,8 +17,6 @@ void chatterCallback(const vital_sign_msgs::VitalSigns::ConstPtr& msg)
         double distance = sqrt(pow(msg->measurements[0].location.x, 2.0) +
                                pow(msg->measurements[0].location.y, 2.0) +
                                pow(msg->measurements[0].location.z, 2.0));
-        printf("X:%f Y:%f Z:%f\n", msg->measurements[0].location.x, msg->measurements[0].location.y,msg->measurements[0].location.z);
-        printf("Distance: %f\n", distance);
 
         if (vitalSignData) {
             vitalSignData << "" << distance << " " << msg->measurements[0].heart_rate << " " <<
